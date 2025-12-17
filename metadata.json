@@ -1,0 +1,5 @@
+{
+  "name": "유튜브 트렌드 분석기",
+  "description": "Google Gemini 2.5 Flash를 사용하여 유튜브 트렌드를 분석하고, 콘텐츠 아이디어를 생성하며, 토픽 관심도를 시각화하는 종합 대시보드입니다.",
+  "requestFramePermissions": []
+}

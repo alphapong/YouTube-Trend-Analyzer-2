@@ -35,8 +35,9 @@ export interface SearchParams {
   keyword: string;
   dateRange: string;
   videoDuration: string;
-  geminiApiKey: string; // Required Gemini API Key
-  youtubeApiKey?: string; // Optional API Key for Real Data
+  geminiApiKey: string;mythic-flash-436502-c0
+  youtubeApiKey?: string;
+}
 }
 
 export enum LoadingState {

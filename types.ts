@@ -35,6 +35,7 @@ export interface SearchParams {
   keyword: string;
   dateRange: string;
   videoDuration: string;
+  geminiApiKey: string; // Required Gemini API Key
   youtubeApiKey?: string; // Optional API Key for Real Data
 }
 

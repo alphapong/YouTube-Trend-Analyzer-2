@@ -2,9 +2,12 @@ import { GoogleGenAI, Tool } from "@google/genai";
 import { TrendAnalysisResult, VideoItem, SearchParams, ContentIdea } from "../types";
 import { searchYouTubeVideos } from "./youtubeService";
 
-const apiKey = process.env.API_KEY || '';
+// Store API key in module scope for script generation
+let currentApiKey = '';
 
-const ai = new GoogleGenAI({ apiKey });
+export const setGeminiApiKey = (key: string) => {
+  currentApiKey = key;
+};
 
 // Helper to extract YouTube Video ID robustly (Fallback method)
 const extractVideoId = (url: string): string => {
@@ -26,12 +29,16 @@ const extractVideoId = (url: string): string => {
 };
 
 export const analyzeTrends = async (params: SearchParams): Promise<TrendAnalysisResult> => {
-  const { keyword, language, dateRange, youtubeApiKey } = params;
+  const { keyword, language, dateRange, youtubeApiKey, geminiApiKey } = params;
 
-  if (!apiKey) {
+  if (!geminiApiKey) {
     throw new Error("Gemini API 키가 누락되었습니다.");
   }
 
+  // Store for later use in script generation
+  setGeminiApiKey(geminiApiKey);
+  
+  const ai = new GoogleGenAI({ apiKey: geminiApiKey });
   const modelId = "gemini-2.5-flash";
   
   // Decide whether to ask Gemini for videos or just analysis
@@ -150,23 +157,19 @@ export const analyzeTrends = async (params: SearchParams): Promise<TrendAnalysis
 };
 
 export const generateVideoScript = async (idea: ContentIdea, targetLength: number = 1500, scriptStyle: string = '나레이션'): Promise<string> => {
-  if (!apiKey) {
-    throw new Error("API 키가 없습니다.");
+  if (!currentApiKey) {
+    throw new Error("API 키가 없습니다. 먼저 트렌드 분석을 실행해주세요.");
   }
   
+  const ai = new GoogleGenAI({ apiKey: currentApiKey });
   const modelId = "gemini-2.5-flash";
 
   // Calculate acceptable range (Target +/- 150 characters)
   const minLen = Math.max(300, targetLength - 150);
   const maxLen = targetLength + 150;
 
-  const systemInstruction = `
-    You are a professional YouTube Script Writer.
-    Your goal is to write engaging, viral-worthy scripts in Korean (한국어).
-    Always follow the 'Ki-Seung-Jeon-Gyeol' (Introduction, Development, Twist, Conclusion) structure.
-  `;
-
   const prompt = `
+    You are a professional YouTube Script Writer.
     Write a **pure spoken script** (Narration/Dialogue ONLY) in KOREAN (한국어).
 
     ### Input Details
@@ -174,33 +177,35 @@ export const generateVideoScript = async (idea: ContentIdea, targetLength: numbe
     - Style: ${scriptStyle}
     - Target Length: **${targetLength} characters** (Strict Range: ${minLen} ~ ${maxLen})
 
-    ### Structure Instructions (5-Part Structure)
-    Organize the script into **5 distinct sections** and **USE HEADERS** for each section to clearly distinguish them.
+    ### Structure Instructions (Ki-Seung-Jeon-Gyeol 5-Part Structure)
+    Organize the script into **5 distinct paragraphs** (separated by blank lines).
     
-    1. **[후킹]**: 
+    1. **Hook (후킹)**: 
        - Start with a shocking fact, provocative question, or a counter-intuitive statement.
-       - Hint at a "twist" or "secret" to be revealed later.
+       - **Crucial**: Hint at a "twist" or "secret" to be revealed later to create a curiosity gap (e.g., "But the truth is opposite...").
     
-    2. **[기 (Setup)]**: 
+    2. **Ki (기 - Setup)**: 
        - Introduce the topic and context. Why is this important now?
     
-    3. **[승 (Rising)]**: 
+    3. **Seung (승 - Rising)**: 
        - The core content. Detailed explanation, storytelling, or examples. 
-       - This should be the longest section.
+       - This should be the longest section to meet the character count.
     
-    4. **[전 (Twist/Turn)]**: 
+    4. **Jeon (전 - Twist/Turn)**: 
        - A surprising insight, a hidden pro-tip, or a reversal of common belief. 
+       - "Most people think X, but actually Y."
     
-    5. **[결 (Resolution)]**: 
+    5. **Gyeol (결 - Resolution)**: 
        - Summary of key points.
        - Clear Call to Action (Subscribe, Like, Check description).
 
     ### Formatting Rules (Strict)
-    - **Language**: Korean (한국어) Only.
-    - **Separation**: Use blank lines between sections.
-    - **Headers**: You MUST use the exact headers: "[후킹]", "[기 (Setup)]", "[승 (Rising)]", "[전 (Twist)]", "[결 (Resolution)]".
-    - **Content**: Under each header, write the spoken script. No stage directions like (Action), [Visual].
-    - **Length**: Ensure the total length is within the ${minLen} ~ ${maxLen} character range.
+    - **Output ONLY the Korean spoken text.** 
+    - **DO NOT use headers** like "### Hook" or "Part 1".
+    - **DO NOT use scene cues** like [Visual], (Audio), <Cut to>.
+    - **DO NOT use English explanations.**
+    - Just pure paragraphs of text to be read aloud.
+    - Ensure the total length is within the ${minLen} ~ ${maxLen} character range.
   `;
 
   try {
@@ -208,7 +213,6 @@ export const generateVideoScript = async (idea: ContentIdea, targetLength: numbe
       model: modelId,
       contents: prompt,
       config: {
-        systemInstruction: systemInstruction,
         temperature: 0.8, 
       }
     });

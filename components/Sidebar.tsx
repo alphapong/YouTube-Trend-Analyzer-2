@@ -12,6 +12,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onAnalyze, isAnalyzing }) => {
     keyword: '재테크',
     dateRange: '이번 달',
     videoDuration: '10분 이상',
+    geminiApiKey: '',
     youtubeApiKey: ''
   });
 
@@ -117,10 +118,29 @@ const Sidebar: React.FC<SidebarProps> = ({ onAnalyze, isAnalyzing }) => {
             </div>
           </div>
 
+          {/* Gemini API Key (Required) */}
+          <div className="pt-4 border-t border-gray-200">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              🔑 Gemini API Key <span className="text-red-500">*필수</span>
+            </label>
+            <input 
+              type="password" 
+              placeholder="Gemini API Key를 입력하세요"
+              value={params.geminiApiKey}
+              onChange={(e) => handleChange('geminiApiKey', e.target.value)}
+              className="appearance-none border border-gray-300 rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:border-indigo-500 transition-colors"
+            />
+            <p className="text-[10px] text-gray-400 mt-1">
+              <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-indigo-500 hover:underline">
+                Google AI Studio
+              </a>에서 무료로 발급받을 수 있습니다.
+            </p>
+          </div>
+
           {/* YouTube API Key (Optional) */}
-          <div className="pt-2 border-t border-gray-100">
+          <div className="pt-2">
             <label className="block text-xs font-semibold text-gray-500 mb-2">
-              🔑 YouTube Data API Key (선택)
+              🎬 YouTube Data API Key (선택)
             </label>
             <input 
               type="password" 
@@ -137,8 +157,8 @@ const Sidebar: React.FC<SidebarProps> = ({ onAnalyze, isAnalyzing }) => {
           {/* Submit Button */}
           <button 
             type="submit"
-            disabled={isAnalyzing}
-            className={`w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition-all transform active:scale-95 flex items-center justify-center ${isAnalyzing ? 'opacity-70 cursor-not-allowed' : ''}`}
+            disabled={isAnalyzing || !params.geminiApiKey}
+            className={`w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition-all transform active:scale-95 flex items-center justify-center ${(isAnalyzing || !params.geminiApiKey) ? 'opacity-70 cursor-not-allowed' : ''}`}
           >
              {isAnalyzing ? (
                <>

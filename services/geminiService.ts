@@ -2,14 +2,12 @@ import { GoogleGenAI, Tool } from "@google/genai";
 import { TrendAnalysisResult, VideoItem, SearchParams, ContentIdea } from "../types";
 import { searchYouTubeVideos } from "./youtubeService";
 
-// Store API key in module scope for script generation
 let currentApiKey = '';
 
 export const setGeminiApiKey = (key: string) => {
   currentApiKey = key;
 };
 
-// Helper to extract YouTube Video ID robustly (Fallback method)
 const extractVideoId = (url: string): string => {
   if (!url) return '';
   try {
@@ -35,14 +33,11 @@ export const analyzeTrends = async (params: SearchParams): Promise<TrendAnalysis
     throw new Error("Gemini API 키가 누락되었습니다.");
   }
 
-  // Store for later use in script generation
   setGeminiApiKey(geminiApiKey);
   
   const ai = new GoogleGenAI({ apiKey: geminiApiKey });
   const modelId = "gemini-2.5-flash";
   
-  // Decide whether to ask Gemini for videos or just analysis
-  // If we have a YouTube API Key, we don't need Gemini to halluncinate video lists as much.
   const askForVideos = !youtubeApiKey; 
 
   const videoInstruction = askForVideos 
@@ -79,12 +74,9 @@ export const analyzeTrends = async (params: SearchParams): Promise<TrendAnalysis
     }
   `;
 
-  // Only use tools if we don't have a YouTube Key or need grounding for the summary
-  // We always use grounding for better summary accuracy
   const tools: Tool[] = [{ googleSearch: {} }];
 
   try {
-    // 1. Run Gemini Request
     const geminiPromise = ai.models.generateContent({
       model: modelId,
       contents: prompt,
@@ -94,8 +86,6 @@ export const analyzeTrends = async (params: SearchParams): Promise<TrendAnalysis
       }
     });
 
-    // 2. Run YouTube API Request (if key exists) in parallel
-    // Request 12 videos explicitly
     const youtubePromise = youtubeApiKey 
       ? searchYouTubeVideos(youtubeApiKey, keyword, 12) 
       : Promise.resolve([]);
@@ -114,14 +104,11 @@ export const analyzeTrends = async (params: SearchParams): Promise<TrendAnalysis
       ?.map((chunk) => chunk.web ? { uri: chunk.web.uri, title: chunk.web.title } : null)
       .filter((item): item is { uri: string; title: string } => item !== null) || [];
 
-    // 3. Merge Data
     let finalVideos: VideoItem[] = [];
 
     if (youtubeApiKey && realVideos.length > 0) {
-      // Use Real Data
       finalVideos = realVideos;
     } else {
-      // Use Gemini Data (Fallback)
       finalVideos = (parsedData.relatedVideos || []).map((v: any) => {
         let url = v.url;
         if (url && !url.startsWith('http')) url = `https://${url}`;
@@ -164,7 +151,6 @@ export const generateVideoScript = async (idea: ContentIdea, targetLength: numbe
   const ai = new GoogleGenAI({ apiKey: currentApiKey });
   const modelId = "gemini-2.5-flash";
 
-  // Calculate acceptable range (Target +/- 150 characters)
   const minLen = Math.max(300, targetLength - 150);
   const maxLen = targetLength + 150;
 

@@ -8,9 +8,9 @@ export interface VideoItem {
   channel: string;
   views: string;
   publishedDate: string;
-  url: string;       // Actual YouTube URL
-  videoId: string;   // Extracted ID for thumbnail
-  duration: string;  // e.g. "10:05"
+  url: string;
+  videoId: string;
+  duration: string;
 }
 
 export interface ContentIdea {
@@ -21,7 +21,7 @@ export interface ContentIdea {
 }
 
 export interface TrendAnalysisResult {
-  growthScore: number; // 0-100
+  growthScore: number;
   competitionLevel: 'Low' | 'Medium' | 'High' | 'Very High';
   summary: string;
   trendTopics: TrendTopic[];
@@ -35,9 +35,8 @@ export interface SearchParams {
   keyword: string;
   dateRange: string;
   videoDuration: string;
-  geminiApiKey: string;mythic-flash-436502-c0
+  geminiApiKey: string;
   youtubeApiKey?: string;
-}
 }
 
 export enum LoadingState {
